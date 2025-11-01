@@ -1,6 +1,6 @@
 import pandas as pd
 import yfinance as yf
-
+import asyncio
 
 class DataManager:
     def __init__(self):
@@ -39,9 +39,11 @@ class DataManager:
 
     @staticmethod
     def fetch_tickers_data(tickers):
-        raw_data = yf.download(tickers, period="max", interval="1mo")["Close"]
+        raw_data = asyncio.run(asyncio.to_thread(
+            yf.download, tickers, period="max", interval="1mo"
+        ))
         raw_data.index = raw_data.index.to_period("M")
-        return raw_data
+        return raw_data["Close"]
 
     @staticmethod
     def create_wealth_index(raw_data):
@@ -63,6 +65,7 @@ class DataManager:
 
     @staticmethod
     def cut_years(years_to_cut: int | None, data: pd.DataFrame):
+        data.index
         print(data.index, type(data.index))
         cut_data = data.loc[data.index >= data.index.max() - years_to_cut] if years_to_cut else data
         return cut_data
