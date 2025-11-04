@@ -9,26 +9,35 @@ class DataManager:
         self._ticker_raw_data = {}
         self._ticker_data_dict = {}
 
+    def calculate_or_fetch_index(self, period):
+        missing_tickers = self._check_for_missing_data()
+        self._fetch_tickers_raw_data(missing_tickers)
+        return self._process_and_combine_data(period)
+
     def set_tickers(self, tickers):
         self._selected_tickers = tickers
 
-    def get_wealth_index(self, period: int):
-        missing_data = []
+    def _check_for_missing_data(self):
+        ticker_missing_data = []
         for ticker in self._selected_tickers:
             if ticker not in self._ticker_raw_data:
-                missing_data.append(ticker)
+                ticker_missing_data.append(ticker)
 
-        if missing_data:
-            tickers_data = self.fetch_tickers_data(missing_data)
-            for missing_ticker in missing_data:
-                self._ticker_raw_data[missing_ticker] = tickers_data[missing_ticker]
+        return ticker_missing_data
 
+    def _fetch_tickers_raw_data(self, tickers):
+        if tickers:
+            tickers_data = self._fetch_tickers_data(tickers)
+            for ticker in tickers:
+                self._ticker_raw_data[ticker] = tickers_data[ticker]
+
+    def _process_and_combine_data(self, period: int):
         for ticker in self._selected_tickers:
             ticker_period_format = ticker + "_" + str(period)
             if ticker_period_format not in self._ticker_data_dict:
                 raw_data = self._ticker_raw_data[ticker].copy()
-                monthly_data = self.cut_years(period, raw_data)
-                ticker_data = self.create_wealth_index(monthly_data)
+                monthly_data = self._cut_months(period, raw_data)
+                ticker_data = self._create_wealth_index(monthly_data)
                 self._ticker_data_dict[ticker_period_format] = ticker_data
 
         wealth_index = pd.concat(
@@ -39,17 +48,17 @@ class DataManager:
         return wealth_index
 
     @staticmethod
-    def fetch_tickers_data(tickers):
+    def _fetch_tickers_data(tickers):
         raw_data = asyncio.run(asyncio.to_thread(
             yf.download, tickers, period="max", interval="1mo"
         ))
         if raw_data.empty:
-            raise ValueError("Couldn't download data\nCheck internet connection")
+            raise ValueError("Empty! -- placeholder")
         raw_data.index = raw_data.index.to_period("M")
         return raw_data["Close"]
 
     @staticmethod
-    def create_wealth_index(raw_data):
+    def _create_wealth_index(raw_data):
         ticker_data = raw_data
         ticker_data["wealth_index"] = ticker_data.pct_change()
         ticker_wealth_index = (1 + ticker_data["wealth_index"]).cumprod()
@@ -60,18 +69,15 @@ class DataManager:
         return ticker_wealth_index
 
     @staticmethod
-    def ticker_analysis(wealth_index):
+    def _ticker_analysis(wealth_index):
         ticker = wealth_index.columns[0]
         wealth_index["peaks"] = wealth_index[ticker].cummax()
         wealth_index["downturn"] = wealth_index[ticker] / wealth_index["peaks"] - 1
         return wealth_index
 
     @staticmethod
-    def cut_years(years_to_cut: int | None, data: pd.DataFrame):
-        if type(data.index) is not pd.PeriodIndex:
-            print(data)
-
-        cut_data = data.loc[data.index >= data.index.max() - years_to_cut] if years_to_cut else data
+    def _cut_months(months_to_cut: int | None, data: pd.DataFrame):
+        cut_data = data.loc[data.index >= data.index.max() - months_to_cut] if months_to_cut else data
         return cut_data
 
 

@@ -43,8 +43,8 @@ class App(Tk):
                           "5 years": 60,
                           "1 year": 12}
 
-            tickers_data = self._dm.get_wealth_index(choice_map[self._selected.get()])
-
+            period_in_months = choice_map[self._selected.get()]
+            tickers_data = self._dm.calculate_or_fetch_index(period_in_months)
             self._canvas.plot_wealth_index(tickers_data)
 
         except ValueError as e:
@@ -58,6 +58,7 @@ class PlotCanvas(ttk.Frame):
 
     def plot_wealth_index(self, wealth_index):
         if self.canvas_widget:
+            plt.close('all')
             self.canvas_widget.get_tk_widget().destroy()
 
         fig, ax = plt.subplots(figsize=(8, 4))
