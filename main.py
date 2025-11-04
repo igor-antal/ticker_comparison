@@ -32,7 +32,7 @@ class App(Tk):
         self._selected = StringVar(value="Maximum")
         OptionMenu(self._main_frame, self._selected, *self._period_options).grid(column=1, row=0)
 
-    def execute(self):
+    def _execute(self) -> None:
         u_input = (self._ticker_input.get("1.0", tk.END).strip()
                    .replace(" ", "").upper().split(","))
 
