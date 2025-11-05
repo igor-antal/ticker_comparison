@@ -26,7 +26,7 @@ class App(Tk):
         self._canvas = PlotCanvas(self._main_frame)
         self._canvas.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
 
-        ttk.Button(self._main_frame, text="Plot Stuff", command=self.execute).grid(column=1, row=1)
+        ttk.Button(self._main_frame, text="Plot Stuff", command=self._execute).grid(column=1, row=1)
 
         self._period_options = ["Maximum", "10 years", "5 years", "1 year"]
         self._selected = StringVar(value="Maximum")
