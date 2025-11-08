@@ -44,10 +44,10 @@ class App(Tk):
                           "1 year": 12}
 
             period_in_months = choice_map[self._selected.get()]
-            tickers_data = self._dm.calculate_or_fetch_index(period_in_months)
+            tickers_data = self._dm.calculate_or_fetch_wealth_index(period_in_months)
             self._canvas.plot_wealth_index(tickers_data)
 
-        except ValueError as e:
+        except Exception as e:
             tk.messagebox.showerror("Error", str(e))
 
 
